@@ -1,29 +1,16 @@
-DEPDIR = .d
-$(shell mkdir -p $(DEPDIR) >/dev/null)
-DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
+DIR := ${CURDIR}
 
-CXX = g++
-CXXFLAGS = -Wall -std=c++11
-SRCS = $(wildcard *.h) $(wildcard *.cpp)
-DEPS = $(patsubst %.cpp,%.o,$(wildcard *.cpp))
-OUTPUT = client
+all: client server
 
-COMPILE.cc = $(CXX) $(DEPFLAGS) $(CXXFLAGS) -c
-POSTCOMPILE = mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
+client:
+	$(MAKE) -C $(DIR)/Client
 
-all : $(DEPS)
-	$(CXX) -o $(OUTPUT) $(DEPS) 
-
-%.o : %.cpp
-%.o : %.cpp $(DEPDIR)/%.d
-	$(COMPILE.cc) $<
-	$(POSTCOMPILE)
-
-$(DEPDIR)/%.d: ;
-.PRECIOUS: $(DEPDIR)/%.d
+server:
+	$(MAKE) -C $(DIR)/Server
 
 .PHONY: clean
 clean:
-	rm *.o $(OUTPUT)
-
-include $(wildcard $(patsubst %,$(DEPDIR)/%.d,$(basename $(SRCS))))
+	$(MAKE) -C ${DIR}/Client clean
+	$(MAKE) -C ${DIR}/Server clean
+	@echo -e "\n\033[1;32m[Cleaning]\033[0m"
+	rm -f server client
