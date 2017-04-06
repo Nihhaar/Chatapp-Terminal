@@ -32,11 +32,12 @@ int main(){
 	cout<<"\033[1;32mUser Authenticated\033[0m\n\n";
 
 
+	string cmd;
+
 	while(true){
 
 	/* List of Commands */
 	cout<<"\033[1;35mType the command [type 'help' to see list of commands]:\033[0m ";
-	string cmd;
 	getline(cin,cmd);
     if(cmd=="help") {cout<<"You can try the following commands:"<<endl;
 					 cout<<"\033[1;32monline:\033[0m  gives list of online friends"<<endl;
@@ -56,12 +57,16 @@ int main(){
   		length = ntohl(length);
   		buffer = new char[length];
   		readXBytes(sock, length, (void*)buffer);
+  		buffer[length] = '\0';
   		cout<<buffer<<endl;
+
+  		delete[] buffer;
 
 		continue;
 	}
 
 	if(cmd=="friends") {
+
 		sendDataToServer("FRIENDS " + id, sock);
 
 		unsigned int length = 0;
@@ -70,7 +75,10 @@ int main(){
   		length = ntohl(length);
   		buffer = new char[length];
   		readXBytes(sock, length, (void*)buffer);
+  		buffer[length] = '\0';
   		cout<<buffer<<endl;
+
+  		delete[] buffer;
 
 		continue;
 	}
@@ -94,7 +102,9 @@ int main(){
   			length = ntohl(length);
   			buffer = new char[length];
   			readXBytes(sock, length, (void*)buffer);
+  			buffer[length] = '\0';
   			cout<<buffer<<endl;
+	  		delete[] buffer;
 
 		}
 		else if(v.size()==2){
@@ -106,7 +116,10 @@ int main(){
   			length = ntohl(length);
   			buffer = new char[length];
   			readXBytes(sock, length, (void*)buffer);
+  			buffer[length] = '\0';
   			cout<<buffer<<endl;
+  			delete[] buffer;
+	
 		}
 		else{
 			cout<<"Use the command properly!"<<endl<<endl;

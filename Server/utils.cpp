@@ -51,7 +51,7 @@ void readXBytes(int socket, unsigned int x, void* buffer)
     int result;
     while (bytesRead < x)
     {
-        result = read(socket, (uint8_t*)buffer + bytesRead, x - bytesRead);
+        result = read(socket, (uint32_t*)buffer + bytesRead, x - bytesRead);
         if (result < 1 )
         {
             cout<<"Error: read() failed"<<endl;
@@ -60,6 +60,7 @@ void readXBytes(int socket, unsigned int x, void* buffer)
 
         bytesRead += result;
     }
+
 }
 
 void sendDataToClient(string str, int sock){
@@ -92,8 +93,13 @@ void handleTCPClient(int clientSocket){
 
   readXBytes(clientSocket, sizeof(length), (void*)(&length));
   length = ntohl(length);
+  cout<<"Recieved Length: "<<length<<endl;
   buffer = new char[length];
+  memset(buffer,0,length);
   readXBytes(clientSocket, length, (void*)buffer);
+  buffer[length] = '\0';
+
+  cout<<"Buffer after read: "<<buffer<<endl;
 
   std::ifstream privatedb("private.json");
 		bool parsingSuccessful = reader.parse(privatedb, users, false);
@@ -114,14 +120,14 @@ void handleTCPClient(int clientSocket){
 		string id = "0";
 
 		for(Json::Value::iterator it = users.begin(); it!=users.end(); it++){
-			if((*it).get("name","0") == v[1]){
-				if((*it).get("password","0") == v[2]){
+			if((*it)["name"].asString() == v[1]){
+				if((*it)["password"].asString() == v[2]){
 					id = it.key().asString();
 					break;
 				}
 			}
 	    }
-		
+
 		if(id!="0"){
 			users[id]["online"]="true";
 		
@@ -176,8 +182,8 @@ void handleTCPClient(int clientSocket){
 		bool flag=1;
 		for(Json::Value::iterator it = users[id]["friends"].begin(); it!=users[id]["friends"].end(); it++){
 		  	string id1 = (*it)["id"].asString();
-		  	if(users[id1]["online"]=="true" && users[id1]["name"]==v[1]) {msg += v[1] + " :\033[1;32mActive now\033[0m\n";flag=0;}
-		  	else if(users[id1]["name"]==v[1]) {msg += v[1] + " :\033[1;32mLast seen at \033[0m" + users[id1]["last_seen"].asString() + "\n";flag=0;}
+		  	if(users[id1]["online"]=="true" && users[id1]["name"]==v[1]) {msg += v[1] + ": \033[1;32mActive now\033[0m\n";flag=0;}
+		  	else if(users[id1]["name"]==v[1]) {msg += v[1] + ": \033[1;32mLast seen at \033[0m" + users[id1]["last_seen"].asString() + "\n";flag=0;}
 		}
 		
 		if(flag) msg += "\033[1;31mHe/She is not your friend\033[0m\n";
@@ -194,6 +200,7 @@ void handleTCPClient(int clientSocket){
 		Json::StyledStreamWriter writer;
 		writer.write(update,users);
 		update.close();
+		return;
   }
 }
 

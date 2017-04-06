@@ -132,7 +132,7 @@ string login(int sock)
 
 void sendDataToServer(string str, int sock){
 
-  unsigned int length = htonl(str.size());
+  unsigned int length = htonl(str.length());
 
   if(send(sock, &length, sizeof(length), 0) != sizeof(length)){
     cout<<"Error: Sent different number of bytes than expected"<<endl;
