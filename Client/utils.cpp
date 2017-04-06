@@ -81,7 +81,7 @@ void readXBytes(int socket, unsigned int x, void* buffer)
     int result;
     while (bytesRead < x)
     {
-        result = read(socket, (uint8_t*)buffer + bytesRead, x - bytesRead);
+        result = recv(socket, (uint32_t*) buffer + bytesRead, x - bytesRead, 0);
         if (result < 1 )
         {
             cout<<"Error: read() failed"<<endl;
@@ -97,13 +97,13 @@ string login(int sock)
 
   /* LOGIN */
   string username, pwd, auth;
-  cout << "Enter your registered email: ";
+  cout << "Enter your registered username: ";
   getline(cin,username);
   cout << "Enter the password: ";
   pwd = getMaskedInput();
 
   /* PROTOCOL: AUTHENTICATE <USERNAME> <PASSWORD> */
-  auth = "AUTHENTICATE " + username + pwd;
+  auth = "AUTHENTICATE " + username + " " + pwd;
   unsigned int length = htonl(auth.size());
 
   if (send(sock, &length, sizeof(length), 0) != sizeof(length)){

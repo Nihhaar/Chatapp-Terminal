@@ -88,6 +88,8 @@ void handleTCPClient(int clientSocket){
   Json::Value users;
   Json::Reader reader;
 
+  while(true){
+
   readXBytes(clientSocket, sizeof(length), (void*)(&length));
   length = ntohl(length);
   buffer = new char[length];
@@ -97,6 +99,7 @@ void handleTCPClient(int clientSocket){
 		bool parsingSuccessful = reader.parse(privatedb, users, false);
 		if(!parsingSuccessful) {
 		  	cout<<"\033[1;31mError Parsing Json File\033[0m\n\n";
+		  	cout<<reader.getFormattedErrorMessages()<<endl;
 		  	return;
 		}
 		
@@ -108,23 +111,25 @@ void handleTCPClient(int clientSocket){
   {
   	if(v.size()==3){
 
-		string id;
+		string id = "0";
 
 		for(Json::Value::iterator it = users.begin(); it!=users.end(); it++){
-			if((*it).get("username","0") == v[1]){
+			if((*it).get("name","0") == v[1]){
 				if((*it).get("password","0") == v[2]){
 					id = it.key().asString();
 					break;
 				}
 			}
 	    }
-	
-		users[id]["online"]="true";
-	
-		Json::StyledStreamWriter writer;
-		std::ofstream update("private.json");
-		writer.write(update,users);
-		update.close();
+		
+		if(id!="0"){
+			users[id]["online"]="true";
+		
+			Json::StyledStreamWriter writer;
+			std::ofstream update("private.json");
+			writer.write(update,users);
+			update.close();
+		}
 
 		sendDataToClient(id, clientSocket);
   	}
@@ -133,7 +138,6 @@ void handleTCPClient(int clientSocket){
   if(v[0] == "ONLINE"){
   		string id = v[1];
   		string msg;
-
 		for(Json::Value::iterator it = users[id]["friends"].begin(); it!=users[id]["friends"].end(); it++){
 		  	string id1 = (*it)["id"].asString();
 		  	if(users[id1]["online"]=="true") msg += users[id1]["name"].asString() + "\n";
@@ -167,14 +171,13 @@ void handleTCPClient(int clientSocket){
   }
 
   if(v[0] == "LAST_SEEN"){
-  		string id = v[1];
+  		string id = v[2];
   		string msg;
-
 		bool flag=1;
 		for(Json::Value::iterator it = users[id]["friends"].begin(); it!=users[id]["friends"].end(); it++){
 		  	string id1 = (*it)["id"].asString();
-		  	if(users[id1]["online"]=="true" && users[id1]["name"]==v[2]) {msg += "\033[1;32mActive now\033[0m\n";flag=0;}
-		  	else if(users[id1]["name"]==v[2]) {msg += "\033[1;32mLast seen at \033[0m" + users[id1]["last_seen"].asString() + "\n";flag=0;}
+		  	if(users[id1]["online"]=="true" && users[id1]["name"]==v[1]) {msg += v[1] + " :\033[1;32mActive now\033[0m\n";flag=0;}
+		  	else if(users[id1]["name"]==v[1]) {msg += v[1] + " :\033[1;32mLast seen at \033[0m" + users[id1]["last_seen"].asString() + "\n";flag=0;}
 		}
 		
 		if(flag) msg += "\033[1;31mHe/She is not your friend\033[0m\n";
@@ -192,6 +195,7 @@ void handleTCPClient(int clientSocket){
 		writer.write(update,users);
 		update.close();
   }
+}
 
   return;
 

@@ -15,9 +15,9 @@
 			}
 		],
 		"join_date" : "2016-02-03",
-		"last_seen" : "2017-04-02 22:59",
-		"name" : "Nihhaar",
-		"online" : "false",
+		"last_seen" : "2017-04-06 09:41",
+		"name" : "nihhaar",
+		"online" : "true",
 		"password" : "busy"
 	},
 	"2" : 
@@ -36,8 +36,8 @@
 			}
 		],
 		"join_date" : "2017-05-04",
-		"last_seen" : "2017-04-02 22:08",
-		"name" : "BVS",
+		"last_seen" : "2017-04-06 09:35",
+		"name" : "bvs",
 		"online" : "false",
 		"password" : "lazy"
 	},
@@ -55,7 +55,7 @@
 		],
 		"join_date" : "2014-09-16",
 		"last_seen" : "2017-03-31",
-		"name" : "Sai Sandeep",
+		"name" : "sandeep",
 		"online" : "false",
 		"password" : "stud"
 	},
@@ -70,7 +70,7 @@
 		],
 		"join_date" : "2012-12-21",
 		"last_seen" : "2017-03-31",
-		"name" : "Sai Teja",
+		"name" : "saiteja",
 		"online" : "false",
 		"password" : "facts"
 	}

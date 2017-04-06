@@ -1,11 +1,13 @@
 DIR := ${CURDIR}
+DEPS_S = $(wildcard Server/*.cpp Server/*.h)
+DEPS_C = $(wildcard Client/*.cpp Client/*.h)
 
 all: client server
 
-client:
+client: $(DEPS_C)
 	$(MAKE) -C $(DIR)/Client
 
-server:
+server: $(DEPS_S)
 	$(MAKE) -C $(DIR)/Server
 
 .PHONY: clean

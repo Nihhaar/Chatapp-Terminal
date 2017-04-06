@@ -27,11 +27,12 @@ int main(){
 
 	while(id == "0"){
 	    cout<<"\033[1;31mWrong Username/Password\033[0m\n\n";
-	    continue;
+		id = login(sock);
 	}
 	cout<<"\033[1;32mUser Authenticated\033[0m\n\n";
 
 
+	while(true){
 
 	/* List of Commands */
 	cout<<"\033[1;35mType the command [type 'help' to see list of commands]:\033[0m ";
@@ -42,21 +43,36 @@ int main(){
 					 cout<<"\033[1;32mfriends:\033[0m gives list of your friends"<<endl;
 					 cout<<"\033[1;32mlast_seen \033[3m[\033[1;35musername\033[1;32m]:\033[0m Gives last seen time \033[3m[\033[1;35mof your friend\033[1;0m]\033[0m"<<endl;
 					 cout<<"\033[1;32mchat \033[1;35musername:\033[0m Start chat \033[1;35m your friend\033[0m"<<endl;
-					 cout<<"\033[1;32mexit:\033[0m Quits the chat client"<<endl;
-				     cout<<"\033[1;35mType the command [type 'help' to see list of commands]:\033[0m ";
-					 getline(cin,cmd);
+					 cout<<"\033[1;32mexit:\033[0m Quits the chat client\n\n";
+				     continue;
 					}
 
 	if(cmd=="online") {
 		sendDataToServer("ONLINE " + id, sock);
-		cout<<"\033[1;35mType the command [type 'help' to see list of commands]:\033[0m ";
-		getline(cin,cmd);
+
+		unsigned int length = 0;
+  		char* buffer = 0;
+  		readXBytes(sock, sizeof(length), (void*)(&length));
+  		length = ntohl(length);
+  		buffer = new char[length];
+  		readXBytes(sock, length, (void*)buffer);
+  		cout<<buffer<<endl;
+
+		continue;
 	}
 
 	if(cmd=="friends") {
 		sendDataToServer("FRIENDS " + id, sock);
-		cout<<"\033[1;35mType the command [type 'help' to see list of commands]:\033[0m ";
-		getline(cin,cmd);
+
+		unsigned int length = 0;
+  		char* buffer = 0;
+  		readXBytes(sock, sizeof(length), (void*)(&length));
+  		length = ntohl(length);
+  		buffer = new char[length];
+  		readXBytes(sock, length, (void*)buffer);
+  		cout<<buffer<<endl;
+
+		continue;
 	}
 
 	if(cmd=="exit") {
@@ -71,30 +87,47 @@ int main(){
 	if(v[0]=="last_seen") {
 		if(v.size()==1){
 			sendDataToServer("LAST_SEEN_ALL " + id, sock);
+
+			unsigned int length = 0;
+  			char* buffer = 0;
+  			readXBytes(sock, sizeof(length), (void*)(&length));
+  			length = ntohl(length);
+  			buffer = new char[length];
+  			readXBytes(sock, length, (void*)buffer);
+  			cout<<buffer<<endl;
+
 		}
 		else if(v.size()==2){
-			sendDataToServer("LAST_SEEN " + v[1] + id, sock);
+			sendDataToServer("LAST_SEEN " + v[1] + " " + id, sock);
+
+			unsigned int length = 0;
+  			char* buffer = 0;
+  			readXBytes(sock, sizeof(length), (void*)(&length));
+  			length = ntohl(length);
+  			buffer = new char[length];
+  			readXBytes(sock, length, (void*)buffer);
+  			cout<<buffer<<endl;
 		}
 		else{
 			cout<<"Use the command properly!"<<endl<<endl;
 		}
-		cout<<"\033[1;35mType the command [type 'help' to see list of commands]:\033[0m ";
-		getline(cin,cmd);
+		
+		continue;
 	}
 
 	if(v[0]=="chat") {
 		if(v.size()==2){
-			sendDataToServer("CHAT " + v[1] + id, sock);
+			sendDataToServer("CHAT " + v[1] + " " + id, sock);
 		}
 		else{
 			cout<<"Use the command properly!"<<endl<<endl;
 		}
-		cout<<"\033[1;35mType the command [type 'help' to see list of commands]:\033[0m ";
-		getline(cin,cmd);
+		
+		continue;
 	}
 
 	cout<<"Use the command properly! Type 'help to see the list of commands"<<endl<<endl;
-	cout<<"\033[1;35mType the command [type 'help' to see list of commands]:\033[0m ";
-	getline(cin,cmd);
+	}
 
+	return 0;
 }
