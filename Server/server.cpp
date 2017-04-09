@@ -5,6 +5,7 @@
 #include <cstring>
 #include <unistd.h>
 #include <pthread.h>
+#include <unordered_map>
 
 #include "utils.h"
 
@@ -66,8 +67,6 @@ int main(int argc, char* argv[])
 			cout<<"Error: pthread_create() failed"<<endl;
 			return 0;
 		}
-
-		cout<<"Created thread with thread ID: "<<threadID<<endl;
 	}
 
 }

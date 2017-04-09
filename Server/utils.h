@@ -12,6 +12,7 @@
 #include <vector>
 #include <sstream>
 #include <json/json.h>
+#include <unordered_map>
 #include <pthread.h>
 
 using namespace std;

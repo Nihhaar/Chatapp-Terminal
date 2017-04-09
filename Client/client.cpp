@@ -9,11 +9,62 @@
 
 using namespace std;
 
+/* Server Info */
+char SERVERIP[] = "192.168.0.58";
+unsigned short SERVERPORT = 5000;
+
+void startChat(string id, string chatid, int sock){
+
+	string msg = "", protocol;
+	cout<<"\033[1;35mType message to be sent. Type 'exit' to end the chat.\033[0m\n\n";
+		while(msg != "exit"){
+		cout<<"\033[1;33mYou: \033[0m";
+		getline(cin, msg);
+		if(msg!="exit")
+			protocol = "SEND " + msg + " TO " + chatid + " FROM " + id;
+		sendDataToServer(protocol, sock);
+	}
+
+}
+
+void recieveMessages(int sock, string id){
+
+	sendDataToServer("MAP " + id, sock);
+	sendDataToServer("PENDING " + id, sock);
+	unsigned int length = 0;
+  	char* buffer = 0;
+  	while(true){
+  		readXBytes(sock, sizeof(length), (void*)(&length));
+  		length = ntohl(length);
+  		buffer = new char[length];
+  		readXBytes(sock, length, (void*)buffer);
+  		buffer[length] = '\0';
+  		cout<<buffer;
+  	}
+}
+
+void *threadHandler(void* threadargs)
+{
+	/* Connect to Server */
+	int sock;
+	while((sock = connectToServer(SERVERIP, SERVERPORT)) == -1){
+		continue;
+	}
+
+	string id;
+	id = ((struct ThreadArgs *)threadargs)->id;
+
+	pthread_detach(pthread_self());
+	free(threadargs);
+
+	recieveMessages(sock,id);
+
+	return (NULL);
+}
+
 int main(){
 
-	/* Server Info */
-	char SERVERIP[] = "192.168.0.58";
-	unsigned short SERVERPORT = 5000;
+	pthread_t threadID;
 
 	/* Connect to Server */
 	int sock;
@@ -31,9 +82,15 @@ int main(){
 	}
 	cout<<"\033[1;32mUser Authenticated\033[0m\n\n";
 
+	ThreadArgs* threadargs = new ThreadArgs;
+	threadargs->id = id;
+	if(pthread_create(&threadID, NULL, threadHandler, (void*)threadargs) != 0){
+			cout<<"Error: pthread_create() failed"<<endl;
+			return 0;
+		}
+
 
 	string cmd;
-
 	while(true){
 
 	/* List of Commands */
@@ -135,7 +192,22 @@ int main(){
 		else{
 			cout<<"Use the command properly!"<<endl<<endl;
 		}
+
+		unsigned int length = 0;
+  		char* buffer = 0;
+  		readXBytes(sock, sizeof(length), (void*)(&length));
+  		length = ntohl(length);
+  		buffer = new char[length];
+  		readXBytes(sock, length, (void*)buffer);
+  		buffer[length] = '\0';
 		
+		string chatid = (string)buffer;
+		if(chatid =="0"){
+			cout<<"\033[1;31mHe/She is not your friend\033[0m\n";
+			continue;
+		}
+
+		startChat(id, chatid, sock);
 		continue;
 	}
 

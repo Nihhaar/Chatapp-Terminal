@@ -9,10 +9,17 @@
 #include <arpa/inet.h>
 #include <vector>
 #include <sstream>
+#include <pthread.h>
+
+using namespace std;
 
 # define RCVBUFSIZE 32
 
-using namespace std;
+/* Arguments to pass to client thread */
+struct ThreadArgs{
+	string id;
+};
+
 
 // These typedefs will vary across different platforms
 // such as linux, win32, OS/X etc, but the idea

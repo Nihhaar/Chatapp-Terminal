@@ -82,6 +82,11 @@ void readXBytes(int socket, unsigned int x, void* buffer)
     while (bytesRead < x)
     {
         result = recv(socket, (uint32_t*) buffer + bytesRead, x - bytesRead, 0);
+        if(result == 0)
+        {
+            cout<<"Server Disconnected"<<endl;
+            terminate();
+        }
         if (result < 1 )
         {
             cout<<"Error: read() failed"<<endl;

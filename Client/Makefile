@@ -13,7 +13,7 @@ POSTCOMPILE = mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
 
 all : $(DEPS)
 	@echo -e "\n\033[1;32m[INFO] Creating Binary Executable [$(OUTPUT)]\033[0m"
-	$(CXX) -o $(OUTPUT) $(DEPS)
+	$(CXX) -pthread -o $(OUTPUT) $(DEPS)
 
 %.o : %.cpp
 %.o : %.cpp $(DEPDIR)/%.d

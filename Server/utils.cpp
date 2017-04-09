@@ -1,5 +1,8 @@
 #include "utils.h"
 
+pthread_mutex_t mymutex = PTHREAD_MUTEX_INITIALIZER;
+unordered_map <string, int> clientMap;
+
 /* Split a string using delimitter */
 vector<string> split(const string &s, char delim) {
     stringstream ss(s);
@@ -52,6 +55,11 @@ void readXBytes(int socket, unsigned int x, void* buffer)
     while (bytesRead < x)
     {
         result = read(socket, (uint32_t*)buffer + bytesRead, x - bytesRead);
+        if(result == 0)
+        {
+            cout<<"Client Disconnected"<<endl;
+            terminate();
+        }
         if (result < 1 )
         {
             cout<<"Error: read() failed"<<endl;
@@ -93,13 +101,12 @@ void handleTCPClient(int clientSocket){
 
   readXBytes(clientSocket, sizeof(length), (void*)(&length));
   length = ntohl(length);
-  cout<<"Recieved Length: "<<length<<endl;
   buffer = new char[length];
   memset(buffer,0,length);
   readXBytes(clientSocket, length, (void*)buffer);
   buffer[length] = '\0';
 
-  cout<<"Buffer after read: "<<buffer<<endl;
+  pthread_mutex_lock(&mymutex);
 
   std::ifstream privatedb("private.json");
 		bool parsingSuccessful = reader.parse(privatedb, users, false);
@@ -191,17 +198,116 @@ void handleTCPClient(int clientSocket){
 		sendDataToClient(msg, clientSocket);
   }
 
-  if(v[0] == "EXIT"){
-  		string id = v[1];
-  		string time = formatted_time();
-		users[id]["last_seen"]=time;
-		users[id]["online"]="false";
-		std::ofstream update("private.json");
-		Json::StyledStreamWriter writer;
-		writer.write(update,users);
-		update.close();
-		return;
+  if(v[0] == "CHAT"){
+
+  		string id = v[2];
+  		string id2 = "0";
+		  
+      for(Json::Value::iterator it = users[id]["friends"].begin(); it!=users[id]["friends"].end(); it++){
+		  	string id1 = (*it)["id"].asString();
+		  	if(users[id1]["name"]==v[1]) id2 = id1;
+		  }
+		
+		sendDataToClient(id2, clientSocket);
   }
+
+  if(v[0] == "SEND"){
+
+  	  string msg = "";
+      unsigned int i;
+      for(i=1; i<v.size(); i++){
+        if(v[i] == "TO") break;
+        msg = msg + v[i] + " ";
+      }
+
+      string id = v[i+3];
+      string id2 = v[i+1];
+
+      if(users[id2]["online"]!="true"){
+
+          Json::Value msgjson;
+          std::ifstream messages("messages.json");
+          bool parsingSuccessful = reader.parse(messages, msgjson, false);
+          if(!parsingSuccessful) {
+            cout<<"\033[1;31mError Parsing Json File\033[0m\n\n";
+            cout<<reader.getFormattedErrorMessages()<<endl;
+            return;
+          }
+          messages.close();
+  
+          Json::Value msgformat;
+          Json::Value elements;
+          Json::Value arr(Json::arrayValue);
+          msgformat["message"] = msg;
+          msgformat["time"] = (formatted_time());
+          arr.append(msgformat);
+          
+          elements = msgjson[id][id2];
+          if(elements.isNull()){
+            msgjson[id][id2] = arr;
+          }
+          else{
+              msgjson[id][id2].append(msgformat);
+          }
+              std::ofstream update("messages.json");
+              Json::StyledStreamWriter writer;
+              writer.write(update,msgjson);
+              update.close();
+          }
+      
+      else{
+        	string data = "\033[1;96m" + users[id]["name"].asString() +":\033[0m " + msg + "\n";
+        	sendDataToClient(data, clientMap[id2]);
+      }
+  }
+
+  if(v[0] == "MAP"){
+      string id = v[1];
+      clientMap[id] = clientSocket;
+  }
+
+  if(v[0] == "PENDING"){
+      Json::Value msgjson;
+      string msg = "";
+      string id = v[1];
+
+      std::ifstream messages("messages.json");
+      bool parsingSuccessful = reader.parse(messages, msgjson, false);
+      if(!parsingSuccessful) {
+        cout<<"\033[1;31mError Parsing Json File\033[0m\n\n";
+        cout<<reader.getFormattedErrorMessages()<<endl;
+        return;
+      }
+    
+      messages.close();
+
+      for(Json::Value::iterator it = msgjson[id].begin(); it!=msgjson[id].end(); it++){
+        for(Json::Value::iterator it1 = msgjson[id][it.key().asString()].begin(); it1!=msgjson[id][it.key().asString()].end(); it1++)
+          msg = it.key().asString() + ": " +(*it1)["message"].asString() + " at " + (*it1)["time"].asString() + "\n"; 
+      }
+      sendDataToClient(msg, clientMap[v[1]]);
+
+      msgjson[id].clear();
+      std::ofstream update("messages.json");
+      Json::StyledStreamWriter writer;
+      writer.write(update,msgjson);
+      update.close();
+  }
+
+  if(v[0] == "EXIT"){
+  	  string id = v[1];
+  	  string time = formatted_time();
+	  users[id]["last_seen"]=time;
+	  users[id]["online"]="false";
+	  std::ofstream update("private.json");
+	  Json::StyledStreamWriter writer;
+	  writer.write(update,users);
+	  update.close();
+	  return;
+  }
+
+  pthread_mutex_unlock(&mymutex);
+
 }
 
   return;
