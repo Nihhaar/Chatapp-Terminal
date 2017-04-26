@@ -10,6 +10,7 @@
 #include <vector>
 #include <sstream>
 #include <pthread.h>
+#include <cstring>
 
 using namespace std;
 

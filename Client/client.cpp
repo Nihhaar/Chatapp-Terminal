@@ -10,8 +10,8 @@
 using namespace std;
 
 /* Server Info */
-char SERVERIP[] = "192.168.0.58";
-unsigned short SERVERPORT = 5000;
+char SERVERIP[128];
+unsigned short SERVERPORT;
 
 void startChat(string id, string chatid, int sock){
 
@@ -62,9 +62,18 @@ void *threadHandler(void* threadargs)
 	return (NULL);
 }
 
-int main(){
+int main(int argc, char* argv[]){
 
 	pthread_t threadID;
+
+	if(argc!=3){
+		cout<<"Usage: "<<argv[0]<<" <Server IP>"<<" <Server Port>"<<endl;
+		return 0;
+	}
+
+	string IP = argv[1];
+	strcpy(SERVERIP, IP.c_str());
+	SERVERPORT = (unsigned short)stoi(argv[2]);
 
 	/* Connect to Server */
 	int sock;

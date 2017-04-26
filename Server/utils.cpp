@@ -54,16 +54,19 @@ void readXBytes(int socket, unsigned int x, void* buffer)
     int result;
     while (bytesRead < x)
     {
-        result = read(socket, (uint32_t*)buffer + bytesRead, x - bytesRead);
+        result = read(socket, buffer + bytesRead, x - bytesRead);
+        int ret;
         if(result == 0)
         {
             cout<<"Client Disconnected"<<endl;
-            terminate();
+            ret = 0;
+            pthread_exit(&ret);
         }
-        if (result < 1 )
+        if (result < 0 )
         {
             cout<<"Error: read() failed"<<endl;
-            return;
+            ret = 1;
+            pthread_exit(&ret);
         }
 
         bytesRead += result;

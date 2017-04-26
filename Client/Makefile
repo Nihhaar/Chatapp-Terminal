@@ -3,7 +3,7 @@ $(shell mkdir -p $(DEPDIR) >/dev/null)
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
 
 CXX = g++
-CXXFLAGS = -Wall -std=c++11
+CXXFLAGS = -w -std=c++11
 SRCS = $(wildcard *.h) $(wildcard *.cpp)
 DEPS = $(patsubst %.cpp,%.o,$(wildcard *.cpp))
 OUTPUT = client
@@ -29,5 +29,6 @@ clean:
 	@echo -e "\n\033[1;32m[Cleaning]\033[0m"
 	rm -rf $(DEPDIR)
 	rm -f *.o
+	rm -f client
 
 include $(wildcard $(patsubst %,$(DEPDIR)/%.d,$(basename $(SRCS))))
