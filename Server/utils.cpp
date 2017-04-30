@@ -151,6 +151,45 @@ void handleTCPClient(int clientSocket){
   	}
   }
 
+  if(v[0] == "REGISTER"){
+        string email = v[1];
+        string username = v[2];
+        string pwd = v[3];
+        string id = "-1";
+
+        for(Json::Value::iterator it = users.begin(); it!=users.end(); it++){
+			if((*it)["name"].asString() == v[2] || (*it)["email"].asString() == v[1]){
+                id == "0";
+			}
+	    }
+
+        if( id == "0"){
+            sendDataToClient(id, clientSocket);
+        }
+        else{
+            int num = users.size();
+            id = to_string(num+1);
+            Json::Value newuser;
+            newuser["email"] = email;
+            newuser["friends"] = NULL;
+            newuser["join_date"] = split(formatted_time(),' ')[0];
+            newuser["last_seen"] = formatted_time();
+            newuser["name"] = username;
+            newuser["online"] = "true";
+            newuser["password"] = pwd;
+            users[id] = newuser;
+
+            std::ofstream update("private.json");
+	        Json::StyledStreamWriter writer;
+	        writer.write(update,users);
+	        update.close();
+
+            sendDataToClient(id, clientSocket);
+            
+        }
+        
+  }
+
   if(v[0] == "ONLINE"){
   		string id = v[1];
   		string msg;

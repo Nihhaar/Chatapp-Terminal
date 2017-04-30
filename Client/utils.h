@@ -81,6 +81,13 @@ void readXBytes(int socket, unsigned int x, void* buffer);
 string login(int sock);
 
 /**
+	Tries to register into the server
+	@param sock socketdescriptor of the client
+	@return "id" of the user if registered, "0" if not
+*/
+string regist(int sock);
+
+/**
 	Sends string data to server
 	@param str string to be sent
 	@param sock socketdescriptor of the client

@@ -135,6 +135,49 @@ string login(int sock)
 
 }
 
+string regist(int sock)
+{
+
+  /* REGISTER */
+  string username = "", pwd1 = "", pwd2 = "", auth = "", email = "";
+  while(email == ""){
+    cout << "Enter your email address: ";
+    getline(cin, email);
+  }
+
+  while(username == ""){
+    cout << "Enter your desired username: ";
+    getline(cin,username);
+  }
+
+  while(pwd1 == ""){
+    cout << "Enter the password: ";
+    pwd1 = getMaskedInput();
+  }
+
+  while(pwd2 != pwd1){
+    cout << "Enter the password again: ";
+    pwd2 = getMaskedInput();
+  }
+
+  /* PROTOCOL: AUTHENTICATE <USERNAME> <PASSWORD> */
+  auth = "REGISTER " + email + " " + username + " " + pwd1;
+
+  sendDataToServer(auth, sock);  
+
+  /* READ RESPONSE */
+  unsigned int length = 0;
+  char* buffer = 0;
+
+  readXBytes(sock, sizeof(length), (void*)(&length));
+  length = ntohl(length);
+  buffer = new char[length];
+  readXBytes(sock, length, (void*)buffer);
+
+  return (string)buffer;
+
+}
+
 void sendDataToServer(string str, int sock){
 
   unsigned int length = htonl(str.length());

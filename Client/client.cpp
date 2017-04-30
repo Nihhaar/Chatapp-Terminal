@@ -81,15 +81,34 @@ int main(int argc, char* argv[]){
 		continue;
 	}
 
-	/* Login into server */
-	string id;
-	id = login(sock);
-
-	while(id == "0"){
-	    cout<<"\033[1;31mWrong Username/Password\033[0m\n\n";
-		id = login(sock);
+	string cmd = "";	
+	string id = "0";
+	while(cmd != "y" && cmd != "n"){	
+		cout<<"\033[1;35mAre you a new user? [y/n]:\033[0m ";
+		getline(cin,cmd);
 	}
-	cout<<"\033[1;32mUser Authenticated\033[0m\n\n";
+
+	if(cmd == "n"){
+
+		/* Login into server */
+		id = login(sock);
+		while(id == "0"){
+	    	cout<<"\033[1;31mWrong Username/Password\033[0m\n\n";
+			id = login(sock);
+		}
+		cout<<"\033[1;32mUser Authenticated\033[0m\n\n";
+	}
+
+	else{
+
+		/* Register your Account */
+		id = regist(sock);
+		while(id == "0"){
+			cout<<"\033[1;31mYour username/email has already been registered. Please try again\033[0m\n\n";
+			id = regist(sock);
+		}
+		cout<<"\033[1;32mUser Registered\033[0m\n\n";
+	}
 
 	ThreadArgs* threadargs = new ThreadArgs;
 	threadargs->id = id;
@@ -99,7 +118,6 @@ int main(int argc, char* argv[]){
 		}
 
 
-	string cmd;
 	while(true){
 
 	/* List of Commands */
