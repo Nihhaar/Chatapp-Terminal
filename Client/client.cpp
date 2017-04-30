@@ -27,6 +27,9 @@ void startChat(string id, string chatid, int sock){
 		while(msg != "exit"){
 		cout<<"\033[1;33mYou: \033[0m";
 		getline(cin, msg);
+		while (msg.length()==0 )
+            getline(cin, msg);
+
 		if(msg!="exit")
 			protocol = "SEND " + msg + " TO " + chatid + " FROM " + id;
 		sendDataToServer(protocol, sock);
@@ -137,10 +140,12 @@ int main(int argc, char* argv[]){
 					 cout<<"\033[1;32monline:\033[0m  gives list of online friends"<<endl;
 					 cout<<"\033[1;32mfriends:\033[0m gives list of your friends"<<endl;
 					 cout<<"\033[1;32mlast_seen \033[3m[\033[1;35musername\033[1;32m]:\033[0m Gives last seen time \033[3m[\033[1;35mof your friend\033[1;0m]\033[0m"<<endl;
-					 cout<<"\033[1;32mchat \033[1;35musername:\033[0m Start chat \033[1;35m your friend\033[0m"<<endl;
+					 cout<<"\033[1;32mchat \033[1;35musername:\033[0m Start chat with\033[1;35m your friend\033[0m"<<endl;
 					 cout<<"\033[1;32madd \033[1;35musername:\033[0m Send friend request/accept if he already sent\033[0m"<<endl;
 					 cout<<"\033[1;32mpending :\033[0m See pending friend requests[add \033[1;35musername\033[0m to accept the request"<<endl;
 					 cout<<"\033[1;32mlist:\033[0m gives list of members"<<endl;
+					 cout<<"\033[1;32mgroups:\033[0m gives list of your groups"<<endl;
+					 cout<<"\033[1;32mgroup \033[1;35musername1 username2[...] group_name:\033[0m Create groups with specified username and group name"<<endl;					 
 					 cout<<"\033[1;32mexit:\033[0m Quits the chat client\n\n";
 				     continue;
 					}
@@ -210,6 +215,30 @@ int main(int argc, char* argv[]){
   		readXBytes(sock, length, (void*)buffer);
   		buffer[length] = '\0';
   		cout<<buffer<<endl;
+
+  		delete[] buffer;
+
+		continue;
+	}
+
+	if(cmd == "groups"){
+		sendDataToServer("LISTGROUPS " + id, sock);
+
+		unsigned int length = 0;
+  		char* buffer = 0;
+  		readXBytes(sock, sizeof(length), (void*)(&length));
+  		length = ntohl(length);
+  		buffer = new char[length];
+  		readXBytes(sock, length, (void*)buffer);
+  		buffer[length] = '\0';
+		
+		string temp = (string)buffer;
+		if(temp == ""){
+			cout<<"\033[1;31mYou are not part of any group\033[0m\n";
+		}
+		else{
+			cout<<buffer<<endl;
+		}
 
   		delete[] buffer;
 
@@ -317,6 +346,33 @@ int main(int argc, char* argv[]){
 		else{
 			cout<<"\n\033[1;33mFriend request sent\033[0m\n\n";
 		}
+		continue;
+	}
+
+	if(v[0]=="group"){
+		int n = v.size();
+		string msg = "GROUP " + v[n-1] +" " + id + " ";
+		for(int i=1; i<=n-2; i++){
+			msg+= v[i] + " ";
+		}
+		sendDataToServer(msg, sock);
+
+		unsigned int length = 0;
+  		char* buffer = 0;
+  		readXBytes(sock, sizeof(length), (void*)(&length));
+  		length = ntohl(length);
+  		buffer = new char[length];
+  		readXBytes(sock, length, (void*)buffer);
+  		buffer[length] = '\0';
+
+		string tempid = (string) buffer;
+		if(tempid == "0"){
+			cout<<"\n\033[1;31mA group with same name already exists.\033[0m\n\n";
+		}
+		else{
+			cout<<"\n\033[1;33mSuccessfully created the group\033[0m\n\n";
+		}
+
 		continue;
 	}
 

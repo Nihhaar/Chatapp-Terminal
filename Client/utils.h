@@ -45,6 +45,13 @@ typedef unsigned int UInt32;
 vector<string> split(const string &s, char delim);
 
 /**
+	Tells if a string is an integer
+	@param s string to be examined
+	@return boolean representing whether the string is integer
+*/
+inline bool isInteger(const std::string & s);
+
+/**
 	Takes a char input without echoing
 	@return the int value of char
 */

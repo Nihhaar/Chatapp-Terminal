@@ -46,6 +46,13 @@ struct ThreadArgs{
 */
 vector<string> split(const string &s, char delim);
 
+/**
+	Tells if a string is an integer
+	@param s string to be examined
+	@return boolean representing whether the string is integer
+*/
+inline bool isInteger(const std::string & s);
+
 string formatted_time();
 
 void *threadHandler(void *arg);

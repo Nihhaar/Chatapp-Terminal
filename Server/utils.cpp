@@ -14,6 +14,16 @@ vector<string> split(const string &s, char delim) {
     return tokens;
 }
 
+inline bool isInteger(const std::string & s)
+{
+   if(s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+'))) return false ;
+
+   char * p ;
+   strtol(s.c_str(), &p, 10) ;
+
+   return (*p == 0) ;
+}
+
 string formatted_time(){
 
 	time_t t = time(0);
@@ -393,16 +403,70 @@ void handleTCPClient(int clientSocket){
 		sendDataToClient(msg, clientSocket);
   }
 
+  if(v[0] == "LISTGROUPS"){
+        string id = v[1];
+
+        pthread_mutex_lock(&mymutex);
+
+        Json::Value groupjson;
+        std::ifstream groups("groups.json");
+        bool parsingSuccessful = reader.parse(groups, groupjson, false);
+        if(!parsingSuccessful) {
+          cout<<"\033[1;31mError Parsing Json File\033[0m\n\n";
+          cout<<reader.getFormattedErrorMessages()<<endl;
+          return;
+        }
+      
+        groups.close();
+
+        pthread_mutex_unlock(&mymutex);
+
+        string msg = "";
+        for(Json::Value::iterator it = groupjson.begin(); it != groupjson.end(); it++){
+            for(Json::Value::iterator it1 = (*it).begin(); it1 != (*it).end(); it1++){
+                if((*it1)["id"].asString() == id){
+                    msg += it.key().asString() + "\n";
+                    break;
+                }
+            }
+        }
+
+        sendDataToClient(msg, clientSocket);
+
+  }
+
   if(v[0] == "CHAT"){
 
   		string id = v[2];
   		string id2 = "0";
 		  
-      for(Json::Value::iterator it = users[id]["friends"].begin(); it!=users[id]["friends"].end(); it++){
+        for(Json::Value::iterator it = users[id]["friends"].begin(); it!=users[id]["friends"].end(); it++){
 		  	string id1 = (*it)["id"].asString();
 		  	if(users[id1]["name"]==v[1]) id2 = id1;
-		  }
+        }
 		
+        if(id2 == "0"){
+
+            pthread_mutex_lock(&mymutex);
+
+            Json::Value groupjson;
+            std::ifstream groups("groups.json");
+            bool parsingSuccessful = reader.parse(groups, groupjson, false);
+            if(!parsingSuccessful) {
+              cout<<"\033[1;31mError Parsing Json File\033[0m\n\n";
+              cout<<reader.getFormattedErrorMessages()<<endl;
+              return;
+            }
+        
+            groups.close();
+        
+            pthread_mutex_unlock(&mymutex);
+
+            if(!groupjson[v[1]].isNull()){
+                id2 = v[1];
+            }
+
+        }
 		sendDataToClient(id2, clientSocket);
   }
 
@@ -418,47 +482,126 @@ void handleTCPClient(int clientSocket){
       string id = v[i+3];
       string id2 = v[i+1];
 
-      if(users[id2]["online"]!="true"){
+      if(isInteger(id2)){
 
-          Json::Value msgjson;
-          std::ifstream messages("messages.json");
-          bool parsingSuccessful = reader.parse(messages, msgjson, false);
-          if(!parsingSuccessful) {
-            cout<<"\033[1;31mError Parsing Json File\033[0m\n\n";
-            cout<<reader.getFormattedErrorMessages()<<endl;
-            return;
-          }
-          messages.close();
-  
-          Json::Value msgformat;
-          Json::Value elements;
-          Json::Value arr(Json::arrayValue);
-          msgformat["message"] = msg;
-          msgformat["time"] = (formatted_time());
-          arr.append(msgformat);
-          
-          elements = msgjson[id][id2];
-          if(elements.isNull()){
-            msgjson[id][id2] = arr;
-          }
-          else{
-              msgjson[id][id2].append(msgformat);
-          }
+                if(users[id2]["online"]!="true"){
+                                
+                    pthread_mutex_lock(&mymutex);  
 
-  pthread_mutex_lock(&mymutex);  
-          
-              std::ofstream update("messages.json");
-              Json::StyledStreamWriter writer;
-              writer.write(update,msgjson);
-              update.close();
+                    Json::Value msgjson;                    
+                    std::ifstream messages("messages.json");
+                    bool parsingSuccessful = reader.parse(messages, msgjson, false);
+                    if(!parsingSuccessful) {
+                      cout<<"\033[1;31mError Parsing Json File\033[0m\n\n";
+                      cout<<reader.getFormattedErrorMessages()<<endl;
+                      return;
+                    }
+                    messages.close();
+                
+                    pthread_mutex_unlock(&mymutex);  
 
-  pthread_mutex_unlock(&mymutex);  
-              
-          }
-      
+                    Json::Value msgformat;
+                    Json::Value elements;
+                    Json::Value arr(Json::arrayValue);
+                    msgformat["message"] = msg;
+                    msgformat["time"] = (formatted_time());
+                    arr.append(msgformat);
+
+                    elements = msgjson[id][id2];
+                    if(elements.isNull()){
+                      msgjson[id2][id] = arr;
+                    }
+                    else{
+                      msgjson[id2][id].append(msgformat);
+                    }
+                
+                    pthread_mutex_lock(&mymutex);  
+
+                    std::ofstream update("messages.json");
+                    Json::StyledStreamWriter writer;
+                    writer.write(update,msgjson);
+                    update.close();
+                    
+                    pthread_mutex_unlock(&mymutex);  
+
+                    }
+                
+                else{
+                  	string data = "\033[1;96m" + users[id]["name"].asString() +":\033[0m " + msg + "\n";
+                  	sendDataToClient(data, clientMap[id2]);
+                }
+      }
+
       else{
-        	string data = "\033[1;96m" + users[id]["name"].asString() +":\033[0m " + msg + "\n";
-        	sendDataToClient(data, clientMap[id2]);
+
+            pthread_mutex_lock(&mymutex);
+
+            Json::Value groupjson;
+            std::ifstream groups("groups.json");
+            bool parsingSuccessful = reader.parse(groups, groupjson, false);
+            if(!parsingSuccessful) {
+              cout<<"\033[1;31mError Parsing Json File\033[0m\n\n";
+              cout<<reader.getFormattedErrorMessages()<<endl;
+              return;
+            }
+        
+            groups.close();
+        
+            pthread_mutex_unlock(&mymutex);
+
+            for(Json::Value::iterator it = groupjson[id2].begin(); it != groupjson[id2].end(); it++){
+                string id3 = (*it)["id"].asString();
+                if(id3 == id){
+                    continue;
+                }
+                if(users[id3]["online"]!="true"){
+                
+                    Json::Value msgjson;
+                
+                    pthread_mutex_lock(&mymutex);  
+
+                    std::ifstream messages("messages.json");
+                    bool parsingSuccessful = reader.parse(messages, msgjson, false);
+                    if(!parsingSuccessful) {
+                      cout<<"\033[1;31mError Parsing Json File\033[0m\n\n";
+                      cout<<reader.getFormattedErrorMessages()<<endl;
+                      return;
+                    }
+                    messages.close();
+                
+                    pthread_mutex_unlock(&mymutex);  
+
+                    Json::Value msgformat;
+                    Json::Value elements;
+                    Json::Value arr(Json::arrayValue);
+                    msgformat["message"] = msg;
+                    msgformat["time"] = (formatted_time());
+                    arr.append(msgformat);
+
+                    elements = msgjson[id][id3];
+                    if(elements.isNull()){
+                      msgjson[id3][id] = arr;
+                    }
+                    else{
+                      msgjson[id3][id].append(msgformat);
+                    }
+                
+                    pthread_mutex_lock(&mymutex);  
+
+                    std::ofstream update("messages.json");
+                    Json::StyledStreamWriter writer;
+                    writer.write(update,msgjson);
+                    update.close();
+                    
+                    pthread_mutex_unlock(&mymutex);  
+
+                    }
+                
+                else{
+                  	string data = "\033[1;96m" + id2 + "| " + users[id]["name"].asString() +":\033[0m " + msg + "\n";
+                  	sendDataToClient(data, clientMap[id3]);
+                }
+            }
       }
   }
 
@@ -499,6 +642,61 @@ void handleTCPClient(int clientSocket){
 
   pthread_mutex_unlock(&mymutex);  
       
+  }
+
+  if(v[0] == "GROUP"){
+      string id = v[2];
+      string groupname = v[1];
+      int n = v.size();
+
+      Json::Value groupjson(Json::arrayValue);
+
+      pthread_mutex_lock(&mymutex);
+
+      std::ifstream groups("groups.json");
+      bool parsingSuccessful = reader.parse(groups, groupjson, false);
+      if(!parsingSuccessful) {
+        cout<<"\033[1;31mError Parsing Json File\033[0m\n\n";
+        cout<<reader.getFormattedErrorMessages()<<endl;
+        return;
+      }
+    
+      groups.close();
+
+      pthread_mutex_unlock(&mymutex);
+
+      if(groupjson[groupname].isNull()){
+          Json::Value arr(Json::arrayValue);
+          Json::Value temp;
+          for(int i=3; i<n; i++){
+              for(Json::Value::iterator it = users[id]["friends"].begin(); it!=users[id]["friends"].end(); it++){
+		  	    string id1 = (*it)["id"].asString();
+		  	    if(users[id1]["name"]==v[i]){
+                    temp["id"] = id1;
+                    arr.append(temp);
+                  }
+              }
+              temp["id"] = id;
+              arr.append(temp);
+          }
+          groupjson[groupname] = arr;
+
+        pthread_mutex_lock(&mymutex);  
+          
+              std::ofstream update("groups.json");
+              Json::StyledStreamWriter writer;
+              writer.write(update,groupjson);
+              update.close();
+
+        pthread_mutex_unlock(&mymutex);  
+
+          sendDataToClient("1", clientSocket);
+      }
+
+      else{
+          sendDataToClient("0", clientSocket);
+      }
+
   }
 
   if(v[0] == "EXIT"){

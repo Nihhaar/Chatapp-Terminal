@@ -11,6 +11,16 @@ vector<string> split(const string &s, char delim) {
     return tokens;
 }
 
+inline bool isInteger(const std::string & s)
+{
+   if(s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+'))) return false ;
+
+   char * p ;
+   strtol(s.c_str(), &p, 10) ;
+
+   return (*p == 0) ;
+}
+
 int getch() {
     int ch;
     struct termios t_old, t_new;
