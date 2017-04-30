@@ -295,18 +295,18 @@ int main(int argc, char* argv[]){
 	if(v[0]=="sendfile") {
 		string fileloc = v[2];
 
-		char * buffer; //buffer to store file contents
-		long size;     //file size
-		ifstream file (filename, ios::in|ios::binary|ios::ate);     //open file in binary mode, get pointer at the end of the file (ios::ate)
-		size = file.tellg();     //retrieve get pointer position
-		file.seekg (0, ios::beg);     //position get pointer at the begining of the file
-		buffer = new char [size];     //initialize the buffer
-		file.read (buffer, size);     //read file to buffer
-		file.close();     //close file
+		// char * buffer; //buffer to store file contents
+		// long size;     //file size
+		// ifstream file (filename, ios::in|ios::binary|ios::ate);     //open file in binary mode, get pointer at the end of the file (ios::ate)
+		// size = file.tellg();     //retrieve get pointer position
+		// file.seekg (0, ios::beg);     //position get pointer at the begining of the file
+		// buffer = new char [size];     //initialize the buffer
+		// file.read (buffer, size);     //read file to buffer
+		// file.close();     //close file
 
-		string data = (string)buffer;
-		sendDataToServer("SENDFILE " + v[1] + " " + id, sock);
-		sendDataToServer(data);
+		// string data = (string)buffer;
+		// sendDataToServer("SENDFILE " + v[1] + " " + id, sock);
+		// sendDataToServer(data);
 	}
 
 	if(v[0]=="chat") {

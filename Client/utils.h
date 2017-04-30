@@ -11,6 +11,11 @@
 #include <sstream>
 #include <pthread.h>
 #include <cstring>
+extern "C" {
+# define LDAP_DEPRECATED 1
+# include <ldap.h>
+# include <lber.h>
+}
 
 using namespace std;
 

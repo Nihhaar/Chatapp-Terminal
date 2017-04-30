@@ -117,21 +117,37 @@ string login(int sock)
   cout << "Enter the password: ";
   pwd = getMaskedInput();
 
-  /* PROTOCOL: AUTHENTICATE <USERNAME> <PASSWORD> */
-  auth = "AUTHENTICATE " + username + " " + pwd;
-  sendDataToServer(auth, sock);
+  // /* PROTOCOL: AUTHENTICATE <USERNAME> <PASSWORD> */
+  // auth = "AUTHENTICATE " + username + " " + pwd;
+  // sendDataToServer(auth, sock);
 
-  /* READ RESPONSE */
+  // /* READ RESPONSE */
 
-  unsigned int length = 0;
-  char* buffer = 0;
+  // unsigned int length = 0;
+  // char* buffer = 0;
 
-  readXBytes(sock, sizeof(length), (void*)(&length));
-  length = ntohl(length);
-  buffer = new char[length];
-  readXBytes(sock, length, (void*)buffer);
+  // readXBytes(sock, sizeof(length), (void*)(&length));
+  // length = ntohl(length);
+  // buffer = new char[length];
+  // readXBytes(sock, length, (void*)buffer);
 
-  return (string)buffer;
+  // return (string)buffer;
+
+  string rootdn = "cn="+username+",dc=cs252lab,dc=cse,dc=iitb,dc=ac,dc=in";
+
+  LDAP *ld;
+
+  char *ldap_host = "cs252lab.cse.iitb.ac.in";
+  int ldap_port   = 389;
+  int auth_method = LDAP_AUTH_SIMPLE;
+  int desired_version = LDAP_VERSION3;
+  int result;
+  ld = ldap_init(ldap_host, ldap_port);
+  if(ld == NULL) cout<<"Failed"<<endl;
+  //int result = ldap_set_option(ld, LDAP_OPT_PROTOCOL_VERSION, &desired_version);
+  //cout << "result: " << result << endl;
+  result = ldap_bind_s(ld, rootdn.c_str(), pwd.c_str(), auth_method);
+  cout << "result: " << result << endl;
 
 }
 
