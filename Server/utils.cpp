@@ -121,6 +121,8 @@ void handleTCPClient(int clientSocket){
 		
   privatedb.close();
 
+  pthread_mutex_unlock(&mymutex);  
+
   vector<string> v = split(buffer,' ');
 
   if(v[0] == "AUTHENTICATE")
@@ -141,10 +143,15 @@ void handleTCPClient(int clientSocket){
 		if(id!="0"){
 			users[id]["online"]="true";
 		
+  pthread_mutex_lock(&mymutex);  
+        
 			Json::StyledStreamWriter writer;
 			std::ofstream update("private.json");
 			writer.write(update,users);
 			update.close();
+
+  pthread_mutex_unlock(&mymutex);  
+            
 		}
 
 		sendDataToClient(id, clientSocket);
@@ -171,7 +178,6 @@ void handleTCPClient(int clientSocket){
             id = to_string(num+1);
             Json::Value newuser;
             newuser["email"] = email;
-            newuser["friends"] = NULL;
             newuser["join_date"] = split(formatted_time(),' ')[0];
             newuser["last_seen"] = formatted_time();
             newuser["name"] = username;
@@ -179,10 +185,14 @@ void handleTCPClient(int clientSocket){
             newuser["password"] = pwd;
             users[id] = newuser;
 
+  pthread_mutex_lock(&mymutex);  
+
             std::ofstream update("private.json");
 	        Json::StyledStreamWriter writer;
 	        writer.write(update,users);
 	        update.close();
+
+  pthread_mutex_unlock(&mymutex);  
 
             sendDataToClient(id, clientSocket);
             
@@ -203,13 +213,156 @@ void handleTCPClient(int clientSocket){
 
   if(v[0] == "FRIENDS"){
   		string id = v[1];
-  		string msg;
+  		string msg = "";
   		
 		for(Json::Value::iterator it = users[id]["friends"].begin(); it!=users[id]["friends"].end(); it++){
 		  	msg += users[(*it)["id"].asString()]["name"].asString() + "\n";
 		}
 
 		sendDataToClient(msg, clientSocket);
+  }
+
+  if(v[0] == "LIST"){
+      string msg = "";
+
+      for(Json::Value::iterator it = users.begin(); it!=users.end(); it++){
+		  	msg += (*it)["name"].asString() + "\n";
+	  }
+
+      sendDataToClient(msg, clientSocket);
+  }
+
+  if(v[0] == "REQUESTS"){
+      string id = v[1];
+      string msg = "";
+      if(users[id]["requests"].isNull()){
+          msg = "No pending friend requests\n";
+          sendDataToClient(msg, clientSocket);
+          continue;
+      }
+      for(Json::Value::iterator it = users[id]["requests"].begin(); it!=users[id]["requests"].end(); it++){
+		  	msg = msg + "Request from: \033[1;35m" + users[(*it)["id"].asString()]["name"].asString() + "\033[0m\n";
+	  }
+
+      sendDataToClient(msg, clientSocket);
+  }
+
+  if(v[0] == "ADD"){
+        string id = v[2];
+        string id1 = "0";
+
+        for(Json::Value::iterator it = users.begin(); it!=users.end(); it++){
+			if((*it)["name"].asString() == v[1]){
+                id1 = it.key().asString();
+                if(id1==id){
+                    id1 = "0";
+                }
+			}
+	    }
+
+        if(id1 != "0"){
+
+            bool flag1 = 1;
+            for(Json::Value::iterator it = users[id]["friends"].begin(); it != users[id]["friends"].end(); it++ ){
+                if((*it)["id"].asString() == id1){
+                    flag1 = 0;
+                    sendDataToClient("-2", clientSocket);
+                }
+            }
+
+            if(flag1){
+                    bool flag = 0;
+
+                    if(!users[id]["requests"].isNull())
+                    for(Json::Value::iterator it = users[id]["requests"].begin(); it!=users[id]["requests"].end(); it++){
+                        if(id1 == (*it)["id"].asString()) { flag = 1; break;}
+	                }
+                
+                    if(flag){
+                        Json::Value arr1(Json::arrayValue);
+                        Json::Value temp;
+                    
+                        for(Json::Value::iterator it = users[id]["requests"].begin(); it!=users[id]["requests"].end(); it++){
+                            temp["id"] = (*it)["id"].asString();
+                            if((*it)["id"].asString() != id1){
+                                arr1.append(temp);
+                            }
+	                    }
+                    
+                        temp["id"] = id1;
+                        users[id]["requests"] = arr1;    
+                        if(!users[id]["friends"].isNull()){
+                            users[id]["friends"].append(temp);
+                        }
+
+                        else{
+                            arr1.clear();
+                            arr1.append(temp);
+                            users[id]["friends"] = arr1;
+                        }
+
+                        temp["id"] = id;
+                        if(!users[id1]["friends"].isNull()){
+                            users[id1]["friends"].append(temp);
+                        }
+
+                        else{
+                            arr1.clear();
+                            arr1.append(temp);
+                            users[id1]["friends"] = arr1;
+                        }
+
+                    
+                pthread_mutex_lock(&mymutex);              
+
+                        std::ofstream update("private.json");
+	                    Json::StyledStreamWriter writer;
+	                    writer.write(update,users);
+	                    update.close();
+                    
+                pthread_mutex_unlock(&mymutex);              
+
+                        sendDataToClient("-1", clientSocket);
+                    }
+                
+                    else{
+                    
+                    Json::Value arr(Json::arrayValue);
+                    Json::Value req;
+                    Json::Value elements;
+                
+                    req["id"] = id;
+                    arr.append(req);
+                
+                    elements = users[id]["requests"];
+                    if(elements.isNull()){
+                        users[id1]["requests"] = arr;
+                    } 
+                    else{
+                        users[id1]["requests"].append(req);
+                    }
+                
+            pthread_mutex_lock(&mymutex);  
+
+                    std::ofstream update("private.json");
+	                Json::StyledStreamWriter writer;
+	                writer.write(update,users);
+	                update.close();
+                
+            pthread_mutex_unlock(&mymutex);          
+
+                    sendDataToClient(id1, clientSocket);
+                
+                    }
+            } 
+        
+        }
+
+        else {
+            sendDataToClient(id1,clientSocket);
+        }
+
+        
   }
 
   if(v[0] == "LAST_SEEN_ALL"){
@@ -291,10 +444,16 @@ void handleTCPClient(int clientSocket){
           else{
               msgjson[id][id2].append(msgformat);
           }
+
+  pthread_mutex_lock(&mymutex);  
+          
               std::ofstream update("messages.json");
               Json::StyledStreamWriter writer;
               writer.write(update,msgjson);
               update.close();
+
+  pthread_mutex_unlock(&mymutex);  
+              
           }
       
       else{
@@ -330,10 +489,16 @@ void handleTCPClient(int clientSocket){
       sendDataToClient(msg, clientMap[v[1]]);
 
       msgjson[id].clear();
+
+  pthread_mutex_lock(&mymutex);  
+      
       std::ofstream update("messages.json");
       Json::StyledStreamWriter writer;
       writer.write(update,msgjson);
       update.close();
+
+  pthread_mutex_unlock(&mymutex);  
+      
   }
 
   if(v[0] == "EXIT"){
@@ -341,14 +506,19 @@ void handleTCPClient(int clientSocket){
   	  string time = formatted_time();
 	  users[id]["last_seen"]=time;
 	  users[id]["online"]="false";
+
+  pthread_mutex_lock(&mymutex);  
+      
 	  std::ofstream update("private.json");
 	  Json::StyledStreamWriter writer;
 	  writer.write(update,users);
 	  update.close();
+
+  pthread_mutex_unlock(&mymutex);  
+      
+      close(clientSocket);
 	  return;
   }
-
-  pthread_mutex_unlock(&mymutex);
 
 }
 

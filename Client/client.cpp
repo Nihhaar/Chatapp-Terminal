@@ -12,6 +12,13 @@ using namespace std;
 /* Server Info */
 char SERVERIP[128];
 unsigned short SERVERPORT;
+int socket_thread;
+
+void cleanup_handler(void *arg )
+{
+	// Close your socket
+	close(socket_thread);
+}
 
 void startChat(string id, string chatid, int sock){
 
@@ -45,19 +52,22 @@ void recieveMessages(int sock, string id){
 
 void *threadHandler(void* threadargs)
 {
+	string id;
+	id = ((struct ThreadArgs *)threadargs)->id;	
+	
+	pthread_cleanup_push(cleanup_handler, NULL);
+
 	/* Connect to Server */
-	int sock;
-	while((sock = connectToServer(SERVERIP, SERVERPORT)) == -1){
+	while((socket_thread = connectToServer(SERVERIP, SERVERPORT)) == -1){
 		continue;
 	}
-
-	string id;
-	id = ((struct ThreadArgs *)threadargs)->id;
 
 	pthread_detach(pthread_self());
 	free(threadargs);
 
-	recieveMessages(sock,id);
+	recieveMessages(socket_thread,id);
+
+	pthread_cleanup_pop(1);
 
 	return (NULL);
 }
@@ -128,6 +138,9 @@ int main(int argc, char* argv[]){
 					 cout<<"\033[1;32mfriends:\033[0m gives list of your friends"<<endl;
 					 cout<<"\033[1;32mlast_seen \033[3m[\033[1;35musername\033[1;32m]:\033[0m Gives last seen time \033[3m[\033[1;35mof your friend\033[1;0m]\033[0m"<<endl;
 					 cout<<"\033[1;32mchat \033[1;35musername:\033[0m Start chat \033[1;35m your friend\033[0m"<<endl;
+					 cout<<"\033[1;32madd \033[1;35musername:\033[0m Send friend request/accept if he already sent\033[0m"<<endl;
+					 cout<<"\033[1;32mpending :\033[0m See pending friend requests[add \033[1;35musername\033[0m to accept the request"<<endl;
+					 cout<<"\033[1;32mlist:\033[0m gives list of members"<<endl;
 					 cout<<"\033[1;32mexit:\033[0m Quits the chat client\n\n";
 				     continue;
 					}
@@ -167,9 +180,46 @@ int main(int argc, char* argv[]){
 		continue;
 	}
 
+	if(cmd == "pending"){
+
+		sendDataToServer("REQUESTS " + id, sock);
+
+		unsigned int length = 0;
+  		char* buffer = 0;
+  		readXBytes(sock, sizeof(length), (void*)(&length));
+  		length = ntohl(length);
+  		buffer = new char[length];
+  		readXBytes(sock, length, (void*)buffer);
+  		buffer[length] = '\0';
+  		cout<<buffer<<endl;
+
+  		delete[] buffer;
+
+		continue;
+	}
+
+	if(cmd == "list"){
+
+		sendDataToServer("LIST", sock);
+
+		unsigned int length = 0;
+  		char* buffer = 0;
+  		readXBytes(sock, sizeof(length), (void*)(&length));
+  		length = ntohl(length);
+  		buffer = new char[length];
+  		readXBytes(sock, length, (void*)buffer);
+  		buffer[length] = '\0';
+  		cout<<buffer<<endl;
+
+  		delete[] buffer;
+
+		continue;
+	}
+
 	if(cmd=="exit") {
 		sendDataToServer("EXIT " + id, sock);
 		close(sock);
+		pthread_cancel(threadID);
 		return 0;
 	}
 	
@@ -235,6 +285,38 @@ int main(int argc, char* argv[]){
 		}
 
 		startChat(id, chatid, sock);
+		continue;
+	}
+
+	if(v[0]=="add"){
+		if(v.size()==2){
+			sendDataToServer("ADD " + v[1] + " " + id, sock);
+		}
+		else{
+			cout<<"Use the command properly!"<<endl<<endl;
+		}
+
+		unsigned int length = 0;
+  		char* buffer = 0;
+  		readXBytes(sock, sizeof(length), (void*)(&length));
+  		length = ntohl(length);
+  		buffer = new char[length];
+  		readXBytes(sock, length, (void*)buffer);
+  		buffer[length] = '\0';
+
+		string tempid = (string) buffer;
+		if(tempid =="0"){
+			cout<<"\n\033[1;31mHe/She is not a member\033[0m\n\n";
+		}
+		else if(tempid == "-1"){
+			cout<<"\n\033[1;33mFriend request accepted\033[0m\n\n";
+		}
+		else if(tempid == "-2"){
+			cout<<"\n\033[1;31mHe is already your friend\033[0m\n\n";
+		}
+		else{
+			cout<<"\n\033[1;33mFriend request sent\033[0m\n\n";
+		}
 		continue;
 	}
 

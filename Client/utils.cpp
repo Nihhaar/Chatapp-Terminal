@@ -109,21 +109,11 @@ string login(int sock)
 
   /* PROTOCOL: AUTHENTICATE <USERNAME> <PASSWORD> */
   auth = "AUTHENTICATE " + username + " " + pwd;
-  unsigned int length = htonl(auth.size());
-
-  if (send(sock, &length, sizeof(length), 0) != sizeof(length)){
-    cout<<"Error: Sent different number of bytes than expected"<<endl;
-    return 0;
-  }
-
-  if (send(sock, auth.c_str(), auth.size(), 0) != (int)auth.size()){
-    cout<<"Error: Sent different number of bytes than expected"<<endl;
-    return 0;
-  }
+  sendDataToServer(auth, sock);
 
   /* READ RESPONSE */
 
-  length = 0;
+  unsigned int length = 0;
   char* buffer = 0;
 
   readXBytes(sock, sizeof(length), (void*)(&length));
