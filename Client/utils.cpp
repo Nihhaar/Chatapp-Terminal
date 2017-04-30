@@ -95,11 +95,14 @@ void readXBytes(int socket, unsigned int x, void* buffer)
         if(result == 0)
         {
             cout<<"Server Disconnected"<<endl;
-            terminate();
+            result = 1;
+            pthread_exit(&result);
         }
-        if (result < 1 )
+        if (result < 0 )
         {
             cout<<"Error: read() failed"<<endl;
+            result = 1;
+            pthread_exit(&result);
             return;
         }
 
@@ -173,6 +176,7 @@ string regist(int sock)
   length = ntohl(length);
   buffer = new char[length];
   readXBytes(sock, length, (void*)buffer);
+  buffer[length] = '\0';
 
   return (string)buffer;
 

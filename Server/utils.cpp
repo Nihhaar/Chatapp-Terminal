@@ -634,7 +634,7 @@ void handleTCPClient(int clientSocket){
 
   if(v[0] == "PENDING"){
       Json::Value msgjson;
-      string msg = "";
+      string msg = "\n";
       string id = v[1];
 
       std::ifstream messages("messages.json");
@@ -649,7 +649,7 @@ void handleTCPClient(int clientSocket){
 
       for(Json::Value::iterator it = msgjson[id].begin(); it!=msgjson[id].end(); it++){
         for(Json::Value::iterator it1 = msgjson[id][it.key().asString()].begin(); it1!=msgjson[id][it.key().asString()].end(); it1++)
-          msg = it.key().asString() + ": " +(*it1)["message"].asString() + " at " + (*it1)["time"].asString() + "\n"; 
+          msg = users[it.key().asString()]["name"].asString() + ": " +(*it1)["message"].asString() + " at " + (*it1)["time"].asString() + "\n"; 
       }
       sendDataToClient(msg, clientMap[v[1]]);
 

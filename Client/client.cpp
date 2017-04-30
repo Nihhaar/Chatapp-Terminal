@@ -25,14 +25,14 @@ void startChat(string id, string chatid, int sock){
 	string msg = "", protocol;
 	cout<<"\033[1;35mType message to be sent. Type 'exit' to end the chat.\033[0m\n\n";
 		while(msg != "exit"){
-		cout<<"\033[1;33mYou: \033[0m";
 		getline(cin, msg);
 		while (msg.length()==0 )
             getline(cin, msg);
 
-		if(msg!="exit")
+		if(msg!="exit"){
 			protocol = "SEND " + msg + " TO " + chatid + " FROM " + id;
-		sendDataToServer(protocol, sock);
+			sendDataToServer(protocol, sock);
+		}
 	}
 
 }
@@ -131,10 +131,11 @@ int main(int argc, char* argv[]){
 		}
 
 
+	cout<<"\033[1;35mType the command [type 'help' to see list of commands]:\033[0m ";
+	
 	while(true){
 
 	/* List of Commands */
-	cout<<"\033[1;35mType the command [type 'help' to see list of commands]:\033[0m ";
 	getline(cin,cmd);
     if(cmd=="help") {cout<<"You can try the following commands:"<<endl;
 					 cout<<"\033[1;32monline:\033[0m  gives list of online friends"<<endl;
