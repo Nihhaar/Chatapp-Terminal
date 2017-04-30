@@ -187,9 +187,12 @@ void sendDataToServer(string str, int sock){
     return;
   }
 
-  if(send(sock, str.c_str(), str.size(), 0) != (int)str.size()){
-    cout<<"Error: Sent different number of bytes than expected"<<endl;
-    return;
+  int size = str.size();
+  while(size > 0){
+      size_t written = send(sock, str.c_str(), size, 0);
+      if(written == -1)
+            return;
+       size -= written;
   }
 
   return;

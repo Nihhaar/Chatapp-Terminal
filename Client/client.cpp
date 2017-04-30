@@ -145,6 +145,7 @@ int main(int argc, char* argv[]){
 					 cout<<"\033[1;32mpending :\033[0m See pending friend requests[add \033[1;35musername\033[0m to accept the request"<<endl;
 					 cout<<"\033[1;32mlist:\033[0m gives list of members"<<endl;
 					 cout<<"\033[1;32mgroups:\033[0m gives list of your groups"<<endl;
+					 cout<<"\033[1;32msendfile \033[1;35musername\033[0m filename: Sends the binary file to\033[1;35m your friend\033[0m"<<endl;					 
 					 cout<<"\033[1;32mgroup \033[1;35musername1 username2[...] group_name:\033[0m Create groups with specified username and group name"<<endl;					 
 					 cout<<"\033[1;32mexit:\033[0m Quits the chat client\n\n";
 				     continue;
@@ -288,6 +289,27 @@ int main(int argc, char* argv[]){
 			cout<<"Use the command properly!"<<endl<<endl;
 		}
 		
+		continue;
+	}
+
+	if(v[0]=="sendfile") {
+		string filename = v[2];
+
+		char * buffer; //buffer to store file contents
+		unsigned long size;     //file size
+		ifstream file (filename, ios::in|ios::binary|ios::ate);     //open file in binary mode, get pointer at the end of the file (ios::ate)
+		size = file.tellg();     //retrieve get pointer position
+		file.seekg (0, ios::beg);     //position get pointer at the begining of the file
+		buffer = new char [size+1];     //initialize the buffer
+		file.read (buffer, size);     //read file to buffer
+		buffer[size] = '\0'; //Null terminate the buffer
+		file.close();     //close file
+
+		string data = (string)buffer;
+		sendDataToServer("SENDFILE " + v[1] + " " + v[2] + " " + id, sock);
+		sendDataToServer(data, sock);
+		cout<<"\033[1;33mFile sent Successfully!\033[0m\n"<<endl;
+		delete[] buffer;
 		continue;
 	}
 

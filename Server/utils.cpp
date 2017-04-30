@@ -93,11 +93,14 @@ void sendDataToClient(string str, int sock){
     return;
   }
 
-  if(send(sock, str.c_str(), str.size(), 0) != (int)str.size()){
-    cout<<"Error: Sent different number of bytes than expected"<<endl;
-    return;
+  int size = str.size();
+  while(size > 0){
+      size_t written = send(sock, str.c_str(), size, 0);
+      if(written == -1)
+            return;
+       size -= written;
   }
-
+  
   return;
 }
 
@@ -208,6 +211,25 @@ void handleTCPClient(int clientSocket){
             
         }
         
+  }
+
+  if(v[0] == "SENDFILE"){
+      string id2 = v[1];
+      string id = v[3];
+      string filename = "cache/" + v[2];
+
+      readXBytes(clientSocket, sizeof(length), (void*)(&length));
+      length = ntohl(length);
+      buffer = new char[length];
+      memset(buffer,0,length);
+      readXBytes(clientSocket, length, (void*)buffer);
+      buffer[length] = '\0';
+
+      std::ofstream outfile (filename,std::ofstream::binary);
+      outfile.write(buffer,length);
+      outfile.close();
+      delete[] buffer;
+
   }
 
   if(v[0] == "ONLINE"){
