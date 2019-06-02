@@ -1,8 +1,6 @@
 # ChatClient (C++/Linux)
 
-
-
-## Libraries Used
+## Libraries
 
 JSON Parser Library: https://github.com/open-source-parsers/jsoncpp
 
@@ -12,4 +10,5 @@ JSON Parser Library: https://github.com/open-source-parsers/jsoncpp
 ```
 ChatClient $ make
 ChatClient $ ./client
+ChatClient $ ./server
 ```
